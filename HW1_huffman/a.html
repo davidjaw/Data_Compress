@@ -49,12 +49,16 @@
           clone_array = array.slice(0);
           // 生成 nodeTree
           var nodeTree = growTree(array);
+          var totalEmtropy = 0;
           // 生成表格
           clone_array.sort(compare).forEach(function(obj){
             var percentage = (obj.val / total),
               emtropy = percentage * Math.log2( 1 / percentage );
+            if( emtropy.toString() != 'NaN')
+              totalEmtropy += emtropy;
             $('table').append( '<tr class="tr"><td>' + obj.name + '</td><td>' + obj.val + '</td><td>' + percentage.toString().substring(0,6) + '</td><td>' + emtropy.toString().substring(0,8) + '</td><td>' + getCode(obj, nodeTree) + '</td></tr>' )
           });
+          $('table').before('<h3>Total symbols: '+total+'</h3><h3>total Emtropy: ' + totalEmtropy + ' bits/symbol</h3>')
         };
         reader.readAsText(input.files[0]);
       };
@@ -161,6 +165,9 @@
   <style>
     *{
       font-size: 13pt
+    }
+    h3 {
+      margin: 0;
     }
     table{
       left: 50px
