@@ -1,0 +1,185 @@
+<html>
+  <head>
+    <script>
+      'use strict';
+      var array = [], clone_array = [];
+      var openFile = function(event) {
+        var input = event.target;
+
+        var reader = new FileReader();
+        reader.onload = function(){
+          var text = reader.result;
+          var total = 0;
+          
+          // 讀檔案
+          text.split('').forEach(function(symbol){
+            // 網頁讀檔會自動加入 \r
+            if(symbol === "\r")
+              return;
+            else if(symbol === "\n")
+              symbol = "CR";
+            var check = false;
+            // 已經加入清單就把值+1
+            array.forEach(function(obj){
+              if(obj.name === symbol){
+                check = true;
+                obj.val ++;
+                total++
+              }
+            });
+            // 未加入清單
+            if(!check){
+              array.push({
+                name: symbol,
+                val: 1
+              });
+              total++;
+            }
+          });
+          // 填入沒出現的
+          'abcdefghijklmnopqrstuvwxyz '.split('').forEach(function(_char){
+            var check = false;
+            array.forEach(function(obj){
+              if(obj.name === _char){ check = true; }
+            });
+            if(!check)
+              array.push({name: _char, val: 0});
+          });
+          // 由於在node Tree 中會破壞array, 必須先clone
+          clone_array = array.slice(0);
+          // 生成 nodeTree
+          var nodeTree = growTree(array);
+          // 生成表格
+          clone_array.sort(compare).forEach(function(obj){
+            var percentage = (obj.val / total),
+              emtropy = percentage * Math.log2( 1 / percentage );
+            $('table').append( '<tr class="tr"><td>' + obj.name + '</td><td>' + obj.val + '</td><td>' + percentage.toString().substring(0,6) + '</td><td>' + emtropy.toString().substring(0,8) + '</td><td>' + getCode(obj, nodeTree) + '</td></tr>' )
+          });
+        };
+        reader.readAsText(input.files[0]);
+      };
+      function compare(a,b){
+        if(a.name < b.name)
+          return -1;
+        else if(a.name > b.name)
+          return 1;
+        return 0;
+      }
+
+      /* class 使用 babel 生成，ES6 源碼請見 */
+      function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+      var NodeTree = (function () {
+        function NodeTree(_ref) {
+          var name = _ref.name;
+          var val = _ref.val;
+          var _ref$leftNode = _ref.leftNode;
+          var leftNode = _ref$leftNode === undefined ? null : _ref$leftNode;
+          var _ref$rightNode = _ref.rightNode;
+          var rightNode = _ref$rightNode === undefined ? null : _ref$rightNode;
+
+          _classCallCheck(this, NodeTree);
+
+          this.name = name;
+          this.val = val;
+          this.leftNode = leftNode;
+          this.rightNode = rightNode;
+        }
+
+        NodeTree.prototype.getLeft = function getLeft() {
+          return this.leftNode;
+        };
+
+        NodeTree.prototype.getRight = function getRight() {
+          return this.rightNode;
+        };
+
+        return NodeTree;
+      })();
+
+      function growTree(_x) {
+        var _again = true;
+
+        _function: while (_again) {
+          var data = _x;
+          _again = false;
+
+          data = data.sort(function (a, b) {
+            return a.val < b.val;
+          });
+          if (data.length > 2) {
+            var left = data.pop(),
+                right = data.pop();
+            data.push(new NodeTree({
+              name: left.name + right.name,
+              val: left.val + right.val,
+              leftNode: left,
+              rightNode: right
+            }));
+            _x = data;
+            _again = true;
+            left = right = undefined;
+            continue _function;
+          } else if (data.length == 2) {
+            var left = data.pop(),
+                right = data.pop();
+            return new NodeTree({
+              name: left.name + right.name,
+              val: left.val + right.val,
+              leftNode: left,
+              rightNode: right
+            });
+          }
+        }
+      }
+
+      function getCode(node, parentNode) {
+        var name = node.name;
+        if (name === parentNode.name) {
+          return '';
+        } else if (parentNode.getLeft().name.match(name) !== null) {
+          return '0' + getCode(node, parentNode.getLeft());
+        } else {
+          return '1' + getCode(node, parentNode.getRight());
+        }
+      }
+
+    </script>
+    <script src="jquery-2.1.4.min.js"></script>
+    <link rel="stylesheet" href="bootstrap.min.css">
+  </head>
+  <body>
+    <input type='file' accept='text/plain' onchange='openFile(event)'><br>
+    <table class="col-xs-10" style="border:3px #ececec solid;padding: 5px" cellpadding="10" border="1">
+      <th>符號</th>
+      <th>出現次數</th>
+      <th>出現機率</th>
+      <th>Emtropy</th>
+      <th>編碼結果</th>
+    </table>
+  </body>
+  <style>
+    *{
+      font-size: 13pt
+    }
+    table{
+      left: 50px
+    }
+    .container {
+      padding: 5px;
+    }
+    th{
+      width: 1
+    }
+    th, td {
+      padding: 5px;
+    }
+    th {
+      color: #47464C;
+    }
+    tr {
+      color: #47464C;
+    }
+  </style>
+</html>
+    
